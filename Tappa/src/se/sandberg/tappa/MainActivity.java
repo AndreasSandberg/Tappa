@@ -1,6 +1,8 @@
 package se.sandberg.tappa;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
@@ -47,11 +49,28 @@ public class MainActivity extends Activity {
 		return false;
 	}
 
-
-	/** Called when the user clicks the button 
+	/** Called when the user clicks the minus button 
 	 * @throws ExecutionException 
 	 * @throws InterruptedException */
-	public void scrape(View view) throws InterruptedException, ExecutionException {
+	public void decreaseDate(View view) {
+		EditText dateEdit = (EditText) findViewById(R.id.dateInput);
+		Date parsedDate = null;
+		try {
+			parsedDate = sdf.parse(dateEdit.getText().toString());
+		} catch (ParseException e) {
+			return;
+		}
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(parsedDate);
+		cal.add(Calendar.DAY_OF_YEAR, -1);
+		dateEdit.setText(sdf.format(cal.getTime()));
+
+	}
+
+	/** Called when the user clicks the register button 
+	 * @throws ExecutionException 
+	 * @throws InterruptedException */
+	public void scrape(View view) {
 
 		final String date = ((EditText) findViewById(R.id.dateInput)).getText().toString();
 		final String nrOfSteps = ((EditText) findViewById(R.id.nrOfStepsInput)).getText().toString();

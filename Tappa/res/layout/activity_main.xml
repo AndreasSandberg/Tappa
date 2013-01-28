@@ -91,4 +91,17 @@
         android:onClick="scrape"
         android:text="@string/buttonLabel" />
 
+    <Button
+        android:id="@+id/minusButton"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/dateInput"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/dateInput"
+        android:layout_marginRight="17dp"
+        android:layout_toRightOf="@+id/dateInput"
+        android:onClick="decreaseDate"
+        android:text="@string/minusButtonLabel" />
+
 </RelativeLayout>

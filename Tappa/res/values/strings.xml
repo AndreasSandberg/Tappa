@@ -8,5 +8,6 @@
     <string name="nrOfSteps">Antal steg</string>
     <string name="username">Användarnamn</string>
     <string name="password">Lösenord</string>
+      <string name="minusButtonLabel">-</string>
 
 </resources>
