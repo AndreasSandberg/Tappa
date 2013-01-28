@@ -61,10 +61,6 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 						.userAgent(userAgent)
 						.method(Method.POST)
 						.execute();
-				
-				if(isCancelled()){
-					return "Avbröts innan några steg registrerats";
-				}
 
 				Connection.Response findAccountIdReq = Jsoup.connect("http://www.tappa.se/inside/stepcompetition/steps/")
 						.userAgent(userAgent)
@@ -80,10 +76,6 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				
 				String[] split = html.split("accountid=");
 				String accountid = split[1].substring(0, split[1].indexOf("&amp"));
-
-				if(isCancelled()){
-					return "Avbröts innan några steg registrerats";
-				}
 				
 				publishProgress("Skickar steg...");
 				//Register steps
@@ -118,11 +110,6 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 		}
 	}
 	
-	@Override
-	protected void onCancelled() {
-		super.onCancelled();
-		dialog.dismiss();
-	}
 
 	@Override
 	protected void onPreExecute() {

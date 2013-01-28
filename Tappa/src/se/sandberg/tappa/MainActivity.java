@@ -27,7 +27,6 @@ public class MainActivity extends Activity {
 
 	@SuppressLint("SimpleDateFormat")
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -77,9 +76,8 @@ public class MainActivity extends Activity {
 		}
 		RegisterStepsTask registerStepsTask = new RegisterStepsTask(MainActivity.this);
 		registerStepsTask.execute(date, nrOfSteps, username, password);
-		
-
 	}
+	
 
 	private void savePreferences(final String username, final String password) {
 		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
