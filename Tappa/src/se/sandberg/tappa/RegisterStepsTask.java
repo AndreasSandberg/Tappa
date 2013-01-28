@@ -92,7 +92,7 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 					result = "Dina steg har registrerats";
 				}
 
-				Jsoup.connect("http://www.tappa.se/inside/Logout.aspx")
+				Jsoup.connect("http://www.tappa.se/login/logout.ashx")
 				.userAgent(userAgent)
 				.cookies(login.cookies())
 				.method(Method.GET)
