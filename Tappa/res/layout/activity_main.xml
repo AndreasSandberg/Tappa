@@ -48,7 +48,10 @@
         android:layout_alignLeft="@+id/TextView03"
         android:layout_below="@+id/TextView03"
         android:ems="10"
-        android:inputType="number" />
+        android:inputType="number" >
+
+        <requestFocus />
+    </EditText>
 
     <EditText
         android:id="@+id/passwordInput"
@@ -58,8 +61,6 @@
         android:layout_below="@+id/TextView01"
         android:ems="10"
         android:inputType="textPassword" >
-
-        <requestFocus />
     </EditText>
 
     <EditText
