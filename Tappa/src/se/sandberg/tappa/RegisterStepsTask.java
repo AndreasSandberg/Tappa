@@ -91,7 +91,7 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				if(body != null && body.length() > 0){
 					result = "Dina steg har registrerats";
 				}
-				//Try to logout - dont parse the results...
+				//Try to logout - don't parse the results...
 				Jsoup.connect("http://www.tappa.se/login/logout.ashx")
 				.userAgent(userAgent)
 				.cookies(login.cookies())
