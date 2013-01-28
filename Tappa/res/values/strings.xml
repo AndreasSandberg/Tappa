@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Tappa</string>
+    <string name="date">Datum</string>
+    <string name="menu_settings">Settings</string>
+    <string name="buttonLabel">Registrera</string>
+    <string name="nrOfSteps">Antal steg</string>
+    <string name="username">Användarnamn</string>
+    <string name="password">Lösenord</string>
+
+</resources>
