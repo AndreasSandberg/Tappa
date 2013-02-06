@@ -91,25 +91,34 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				if(body != null && body.length() > 0){
 					result = "Dina steg har registrerats";
 				}
-				//Try to logout - don't parse the results...
-				Jsoup.connect("http://www.tappa.se/login/logout.ashx")
-				.userAgent(userAgent)
-				.cookies(login.cookies())
-				.method(Method.GET)
-				.execute();
-
+				//Try to logout - don't parse the results or any errors
+				try{
+					Jsoup.connect("http://www.tappa.se/login/logout.ashx")
+					.userAgent(userAgent)
+					.cookies(login.cookies())
+					.method(Method.GET)
+					.execute();
+				}catch (Exception e) {
+					//Ignore errors here.
+				}
 				return result;
 			}
 		});
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
-			return "Oväntat fel: " + e.getMessage();
+			return "Oväntat fel: " + notNull(e.getMessage());
 		} catch (ExecutionException e) {
-			return "Oväntat fel: " + e.getMessage();
+			return "Oväntat fel: " + notNull(e.getMessage());
 		}
 	}
 	
+	private static String notNull(String s){
+		if(s == null){
+			return "";
+		}
+		return s;
+	}
 
 	@Override
 	protected void onPreExecute() {
