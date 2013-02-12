@@ -21,7 +21,6 @@ import android.os.AsyncTask;
 
 /**
  * @author Andreas Sandberg
- *
  */
 public class RegisterStepsTask extends AsyncTask<String, String, String> {
 
@@ -60,12 +59,14 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 						.data("jquery", "true", "txtUsername", username, "txtPassword", password) 
 						.userAgent(userAgent)
 						.method(Method.POST)
+						.timeout(30000)
 						.execute();
 
 				Connection.Response findAccountIdReq = Jsoup.connect("http://www.tappa.se/inside/stepcompetition/steps/")
 						.userAgent(userAgent)
 						.cookies(login.cookies())
 						.method(Method.GET)
+						.timeout(30000)
 						.execute();
 				
 				String html = findAccountIdReq.parse().html();
@@ -84,6 +85,7 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 						.method(Method.POST)
 						.ignoreContentType(true)
 						.cookies(login.cookies())
+						.timeout(30000)
 						.execute();
 
 				String body = register.body();
