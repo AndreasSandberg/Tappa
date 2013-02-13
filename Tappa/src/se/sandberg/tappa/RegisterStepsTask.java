@@ -1,6 +1,3 @@
-/**
- * 
- */
 package se.sandberg.tappa;
 
 import java.io.IOException;
@@ -9,6 +6,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -42,7 +41,7 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				try {
 					return registerSteps(params);
 				} catch (IOException e) {
-					return "Oväntat fel: " + e.getMessage();
+					return "Oväntat fel: " + notNull(e.getMessage());
 				}
 			}
 
@@ -91,10 +90,27 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				String body = register.body();
 				//Means OK
 				if(body != null && body.length() > 0){
-					result = "Dina steg har registrerats";
+					result = "Dina steg har registrerats.";
 				}
-				//Try to logout - don't parse the results or any errors
+				
 				try{
+					publishProgress("Hämtar stegsnitt...");
+					/*Try to parse new step average, note that exceptions here may not 
+					cause error messages since the registration is complete. */
+					Connection.Response findAverage = Jsoup.connect("http://tappa.se/inside/stepcompetition/start/?loggedin=true")
+							.userAgent(userAgent)
+							.cookies(login.cookies())
+							.method(Method.GET)
+							.timeout(30000)
+							.execute();
+					
+					Pattern pattern = Pattern.compile("tr class=\"focus\".+?nowrap\">(.+?)</td>.+?</tr>", Pattern.DOTALL);
+					Matcher matcher = pattern.matcher(findAverage.parse().html());
+					if(matcher.find()){
+						result += "\nNytt stegsnitt: " + matcher.group(1);
+					}
+					
+					//Try to logout - don't parse the results or any errors
 					Jsoup.connect("http://www.tappa.se/login/logout.ashx")
 					.userAgent(userAgent)
 					.cookies(login.cookies())
