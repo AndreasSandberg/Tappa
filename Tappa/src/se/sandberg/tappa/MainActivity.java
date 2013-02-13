@@ -16,6 +16,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
@@ -32,24 +33,43 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
 		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
 
 		setContentView(R.layout.activity_main);
 		((EditText) findViewById(R.id.dateInput)).setText(sdf.format(new Date()));
 		((EditText) findViewById(R.id.usernameInput)).setText(preferences.getString("tappaUsername", ""));
 		((EditText) findViewById(R.id.passwordInput)).setText(preferences.getString("tappaPassword", ""));
-
-
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		//No settings menu in this version
-		return false;
+		menu.add(Menu.NONE, Menu.FIRST, Menu.NONE, "Stegsnittshämning av");
+		menu.add(Menu.NONE, Menu.FIRST+1, Menu.NONE, "Stegsnittshämning på");	
+		return true;
 	}
 
-	/** Called when the user clicks the minus button 
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item){
+		Boolean stepAverage = null;
+		if(item.getItemId() == Menu.FIRST){
+			stepAverage = Boolean.FALSE;
+		}else{
+			stepAverage = Boolean.TRUE;
+		}
+		
+		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+		Editor editor = preferences.edit();
+		editor.putBoolean("tappaStepAverage", stepAverage);
+		if(!editor.commit()){
+			createDialog("Inställningen kunde inte sparas", "Felmeddelande");
+		}
+		
+		return super.onOptionsItemSelected(item);
+	}
+
+	/** 
+	 * Called when the user clicks the minus button 
 	 * @throws ExecutionException 
 	 * @throws InterruptedException */
 	public void decreaseDate(View view) {
@@ -67,16 +87,20 @@ public class MainActivity extends Activity {
 
 	}
 
-	/** Called when the user clicks the register button 
+	/** 
+	 * Called when the user clicks the register button 
 	 * @throws ExecutionException 
 	 * @throws InterruptedException */
 	public void scrape(View view) {
 
+		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+		
 		final String date = ((EditText) findViewById(R.id.dateInput)).getText().toString();
 		final String nrOfSteps = ((EditText) findViewById(R.id.nrOfStepsInput)).getText().toString();
 		final String username = ((EditText) findViewById(R.id.usernameInput)).getText().toString();
 		final String password = ((EditText) findViewById(R.id.passwordInput)).getText().toString();
-
+		final Boolean stepAverage = preferences.getBoolean("tappaStepAverage", Boolean.TRUE);
+		
 		String errorMessage = Validator.validateRequestData(date, nrOfSteps, username, password);
 		if(errorMessage != null){
 			createDialog(errorMessage, "Inmatningsfel");
@@ -88,25 +112,20 @@ public class MainActivity extends Activity {
 			createDialog("Internetanslutning saknas", "Anslutningsfel");
 			return;
 		}
-
-
+		
 		if(username != null && password != null){
-			savePreferences(username, password);
+			Editor editor = preferences.edit();
+			editor.putString("tappaUsername", username);
+			editor.putString("tappaPassword", password);
+			if(!editor.commit()){
+				createDialog("Användarnamnet kunde inte sparas", "Felmeddelande");
+			}
 		}
-		RegisterStepsTask registerStepsTask = new RegisterStepsTask(MainActivity.this);
+	
+		RegisterStepsTask registerStepsTask = new RegisterStepsTask(MainActivity.this, stepAverage);
 		registerStepsTask.execute(date, nrOfSteps, username, password);
 	}
-	
 
-	private void savePreferences(final String username, final String password) {
-		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
-		Editor editor = preferences.edit();
-		editor.putString("tappaUsername", username);
-		editor.putString("tappaPassword", password);
-		if(!editor.commit()){
-			createDialog("Användarnamnet kunde inte sparas", "Felmeddelande");
-		}
-	}
 
 	private void createDialog(String message, String title){
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -114,7 +133,4 @@ public class MainActivity extends Activity {
 		AlertDialog dialog = builder.create();
 		dialog.show();
 	}
-
-
 }
-

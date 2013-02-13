@@ -1,6 +1,7 @@
 package se.sandberg.tappa;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -19,22 +20,29 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 /**
+ * The RegisterStepTask handles the actual step registration by scraping the tappa.se site.
+ * 
  * @author Andreas Sandberg
  */
 public class RegisterStepsTask extends AsyncTask<String, String, String> {
 
 	private ProgressDialog dialog;
 	private final Context context;
-
-	public RegisterStepsTask(Context context) {
+	private final Boolean stepAverage;
+	private static final int TIMEOUT = 30000;
+	private static final Pattern pattern = Pattern.compile("tr class=\"focus\".+?nowrap\">(.+?)</td>.+?</tr>", Pattern.DOTALL);
+	
+	public RegisterStepsTask(Context context, Boolean stepAverage) {
 		super();
 		this.context = context;
+		this.stepAverage = stepAverage;
 	}
 
 
 	@Override
 	protected String doInBackground(final String... params) {
 
+		//Place the execution in a separate thread since the emulator generates warnings about busy main thread otherwise.
 		ExecutorService executor = Executors.newFixedThreadPool(1);
 		Future<String> future = executor.submit(new Callable<String>() {
 			public String call() {
@@ -58,14 +66,14 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 						.data("jquery", "true", "txtUsername", username, "txtPassword", password) 
 						.userAgent(userAgent)
 						.method(Method.POST)
-						.timeout(30000)
+						.timeout(TIMEOUT)
 						.execute();
 
 				Connection.Response findAccountIdReq = Jsoup.connect("http://www.tappa.se/inside/stepcompetition/steps/")
 						.userAgent(userAgent)
 						.cookies(login.cookies())
 						.method(Method.GET)
-						.timeout(30000)
+						.timeout(TIMEOUT)
 						.execute();
 				
 				String html = findAccountIdReq.parse().html();
@@ -73,7 +81,7 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 					//No login...
 					return "Inloggning misslyckades, fel lösenord?";
 				}
-				
+
 				String[] split = html.split("accountid=");
 				String accountid = split[1].substring(0, split[1].indexOf("&amp"));
 				
@@ -84,7 +92,7 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 						.method(Method.POST)
 						.ignoreContentType(true)
 						.cookies(login.cookies())
-						.timeout(30000)
+						.timeout(TIMEOUT)
 						.execute();
 
 				String body = register.body();
@@ -94,20 +102,14 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				}
 				
 				try{
-					publishProgress("Hämtar stegsnitt...");
-					/*Try to parse new step average, note that exceptions here may not 
-					cause error messages since the registration is complete. */
-					Connection.Response findAverage = Jsoup.connect("http://tappa.se/inside/stepcompetition/start/?loggedin=true")
-							.userAgent(userAgent)
-							.cookies(login.cookies())
-							.method(Method.GET)
-							.timeout(30000)
-							.execute();
-					
-					Pattern pattern = Pattern.compile("tr class=\"focus\".+?nowrap\">(.+?)</td>.+?</tr>", Pattern.DOTALL);
-					Matcher matcher = pattern.matcher(findAverage.parse().html());
-					if(matcher.find()){
-						result += "\nNytt stegsnitt: " + matcher.group(1);
+					if(stepAverage){
+						publishProgress("Hämtar stegsnitt...");
+						//Try to parse new step average, note that exceptions here may not 
+						//cause error messages since the registration has finished.
+						Integer stepAverageAfter = retrieveStepAverage(userAgent, login.cookies());
+						if(stepAverageAfter != null){
+							result += "\nNytt stegsnitt: " + stepAverageAfter;
+						}
 					}
 					
 					//Try to logout - don't parse the results or any errors
@@ -121,7 +123,28 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				}
 				return result;
 			}
+
+			private Integer retrieveStepAverage(String userAgent, Map<String, String> cookies) throws IOException {
+				Connection.Response findAverage = Jsoup.connect("http://tappa.se/inside/stepcompetition/start/?loggedin=true")
+						.userAgent(userAgent)
+						.cookies(cookies)
+						.method(Method.GET)
+						.timeout(TIMEOUT)
+						.execute();
+				
+				Matcher matcher = pattern.matcher(findAverage.parse().html());
+				if(matcher.find()){
+					 String stepAverage = matcher.group(1).replaceAll(" ", "");
+					 try{
+						 return Integer.parseInt(stepAverage);
+					 }catch(NumberFormatException nfe){
+						 return null;
+					 }
+				}
+				return null;
+			}
 		});
+		
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
@@ -129,13 +152,6 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 		} catch (ExecutionException e) {
 			return "Oväntat fel: " + notNull(e.getMessage());
 		}
-	}
-	
-	private static String notNull(String s){
-		if(s == null){
-			return "";
-		}
-		return s;
 	}
 
 	@Override
@@ -165,5 +181,11 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 		builder.create().show();
 
 	}
-
+	
+	private static String notNull(String s){
+		if(s == null){
+			return "";
+		}
+		return s;
+	}
 }
