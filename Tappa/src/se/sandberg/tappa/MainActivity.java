@@ -30,6 +30,8 @@ public class MainActivity extends Activity {
 
 	@SuppressLint("SimpleDateFormat")
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	private RegisterStepsTask registerStepsTask;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -41,14 +43,33 @@ public class MainActivity extends Activity {
 		((EditText) findViewById(R.id.passwordInput)).setText(preferences.getString("tappaPassword", ""));
 	}
 
+	/**
+	 * Called if the activity is stopped due to user changing app, phone call 
+	 * or similar action
+	 */
+	@Override
+	protected void onStop() {
+		super.onStop();
+		if(registerStepsTask != null){
+			registerStepsTask.cancel(true);
+		}
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if(registerStepsTask != null){
+			registerStepsTask.cancel(true);
+		}
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		menu.add(Menu.NONE, Menu.FIRST, Menu.NONE, "Stegsnittshämning av");
 		menu.add(Menu.NONE, Menu.FIRST+1, Menu.NONE, "Stegsnittshämning på");	
 		return true;
 	}
-
-
+	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item){
 		Boolean stepAverage = null;
@@ -69,9 +90,12 @@ public class MainActivity extends Activity {
 	}
 
 	/** 
-	 * Called when the user clicks the minus button 
+	 * Called when the user clicks the minus button, it decreases the date
+	 * by one day in the date edit text input. 
+	 * 
 	 * @throws ExecutionException 
-	 * @throws InterruptedException */
+	 * @throws InterruptedException 
+	 * */
 	public void decreaseDate(View view) {
 		EditText dateEdit = (EditText) findViewById(R.id.dateInput);
 		Date parsedDate = null;
@@ -89,8 +113,10 @@ public class MainActivity extends Activity {
 
 	/** 
 	 * Called when the user clicks the register button 
+	 * 
 	 * @throws ExecutionException 
-	 * @throws InterruptedException */
+	 * @throws InterruptedException 
+	 * */
 	public void scrape(View view) {
 
 		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
@@ -121,8 +147,7 @@ public class MainActivity extends Activity {
 				createDialog("Användarnamnet kunde inte sparas", "Felmeddelande");
 			}
 		}
-	
-		RegisterStepsTask registerStepsTask = new RegisterStepsTask(MainActivity.this, stepAverage);
+		registerStepsTask = new RegisterStepsTask(MainActivity.this, stepAverage);
 		registerStepsTask.execute(date, nrOfSteps, username, password);
 	}
 
