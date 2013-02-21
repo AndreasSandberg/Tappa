@@ -31,16 +31,21 @@ public class MainActivity extends Activity {
 	@SuppressLint("SimpleDateFormat")
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private RegisterStepsTask registerStepsTask;
+	private SharedPreferences preferences;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
-
+		preferences = getPreferences(MODE_PRIVATE);
 		setContentView(R.layout.activity_main);
 		((EditText) findViewById(R.id.dateInput)).setText(sdf.format(new Date()));
 		((EditText) findViewById(R.id.usernameInput)).setText(preferences.getString("tappaUsername", ""));
 		((EditText) findViewById(R.id.passwordInput)).setText(preferences.getString("tappaPassword", ""));
+		String statusMessage = preferences.getString("tappaStatusMessage", null);
+		if(statusMessage != null){
+			createDialog(statusMessage, "Viktigt meddelande");
+			preferences.edit().putString("tappaStatusMessage", null).commit();
+		}
 	}
 
 	/**
@@ -64,6 +69,27 @@ public class MainActivity extends Activity {
 	}
 	
 	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		String statusMessage = preferences.getString("tappaStatusMessage", null);
+		if(statusMessage != null){
+			preferences.edit().putString("tappaStatusMessage", null).commit();
+			createDialog(statusMessage, "Viktigt meddelande");
+		}
+	}
+	
+	@Override
+	protected void onRestart() {
+		super.onRestart();
+		String statusMessage = preferences.getString("tappaStatusMessage", null);
+		if(statusMessage != null){
+			preferences.edit().putString("tappaStatusMessage", null).commit();
+			createDialog(statusMessage, "Viktigt meddelande");
+		}
+	}
+	
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		menu.add(Menu.NONE, Menu.FIRST, Menu.NONE, "Stegsnittshämning av");
 		menu.add(Menu.NONE, Menu.FIRST+1, Menu.NONE, "Stegsnittshämning på");	
@@ -78,8 +104,7 @@ public class MainActivity extends Activity {
 		}else{
 			stepAverage = Boolean.TRUE;
 		}
-		
-		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+	
 		Editor editor = preferences.edit();
 		editor.putBoolean("tappaStepAverage", stepAverage);
 		if(!editor.commit()){
@@ -118,8 +143,6 @@ public class MainActivity extends Activity {
 	 * @throws InterruptedException 
 	 * */
 	public void scrape(View view) {
-
-		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
 		
 		final String date = ((EditText) findViewById(R.id.dateInput)).getText().toString();
 		final String nrOfSteps = ((EditText) findViewById(R.id.nrOfStepsInput)).getText().toString();
@@ -147,7 +170,7 @@ public class MainActivity extends Activity {
 				createDialog("Användarnamnet kunde inte sparas", "Felmeddelande");
 			}
 		}
-		registerStepsTask = new RegisterStepsTask(MainActivity.this, stepAverage);
+		registerStepsTask = new RegisterStepsTask(MainActivity.this, stepAverage, preferences);
 		registerStepsTask.execute(date, nrOfSteps, username, password);
 	}
 

@@ -12,6 +12,8 @@ import org.jsoup.Jsoup;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 
 /**
@@ -21,6 +23,7 @@ import android.os.AsyncTask;
  */
 public class RegisterStepsTask extends AsyncTask<String, String, String> {
 
+	private SharedPreferences preferences;
 	private ProgressDialog dialog;
 	private final Context context;
 	private final Boolean stepAverage;
@@ -28,13 +31,14 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 	private static final Pattern pattern = Pattern.compile("tr class=\"focus\".+?nowrap\">(.+?)</td>.+?</tr>", Pattern.DOTALL);
 	private static final String userAgent = "Mozilla/5.0 (Windows NT 6.2; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0";
 
-	
-	public RegisterStepsTask(Context context, Boolean stepAverage) {
+
+	public RegisterStepsTask(Context context, Boolean stepAverage, SharedPreferences preferences) {
 		super();
 		this.context = context;
 		this.stepAverage = stepAverage;
+		this.preferences = preferences;
 	}
-	
+
 	@Override
 	protected void onCancelled() {
 		super.onCancelled();
@@ -60,8 +64,9 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 
 
 	private String registerSteps(String date, String nrOfSteps, String username, String password) throws IOException {
-		
+
 		if(isCancelled()){
+			saveStatus("Registreringen av " + nrOfSteps + " steg ("+date+") " + "avbröts utan att några steg registrerats");
 			return "";
 		}
 		Connection.Response login = Jsoup.connect("http://tappa.se/login/login.ashx")
@@ -71,10 +76,12 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				.timeout(TIMEOUT)
 				.execute();
 
+
 		if(isCancelled()){
+			saveStatus("Registreringen av " + nrOfSteps + " steg ("+date+") " + "avbröts utan att några steg registrerats");
 			return "";
 		}
-		
+
 		Connection.Response findAccountIdReq = Jsoup.connect("http://www.tappa.se/inside/stepcompetition/steps/")
 				.userAgent(userAgent)
 				.cookies(login.cookies())
@@ -83,9 +90,10 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				.execute();
 
 		if(isCancelled()){
+			saveStatus("Registreringen av " + nrOfSteps + " steg ("+date+") " + "avbröts utan att några steg registrerats");
 			return "";
 		}
-		
+
 		String html = findAccountIdReq.parse().html();
 		if(!html.contains("Logga ut")){
 			//No login...
@@ -105,18 +113,18 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 				.timeout(TIMEOUT)
 				.execute();
 
-		
 		String result = "Okänt fel, kontrollera dina registrerade steg.";
 		String body = register.body();
 		//Means OK
 		if(body != null && body.length() > 0){
 			result = "Dina steg har registrerats.";
 		}
-		
+
 		if(isCancelled()){
+			saveStatus("Registreringen av " + nrOfSteps + " steg ("+date+") " + "avbröts och stegen har registrerats");
 			return result;
 		}
-		
+
 		try{
 			if(stepAverage){
 				publishProgress("Hämtar stegsnitt...");
@@ -127,8 +135,9 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 					result += "\nNytt stegsnitt: " + stepAverageAfter;
 				}
 			}
-			
+
 			if(isCancelled()){
+				saveStatus("Registreringen av " + nrOfSteps + " steg ("+date+") " + "avbröts men stegen har registrerats");
 				return result;
 			}
 
@@ -163,33 +172,29 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 		}
 		return null;
 	}
-	
+
 	@Override
 	protected void onPreExecute() {
 		super.onPreExecute();
-		dialog = new ProgressDialog(context){
-			@Override
-			public void onBackPressed() {
-				super.onBackPressed();
-				RegisterStepsTask.this.cancel(true);
-			}
-		};
+		dialog = new ProgressDialog(context);
 		dialog.setMessage("Startar stegregistrering...");
 		dialog.setIndeterminate(true);
-		dialog.setCancelable(true);
+		dialog.setCancelable(false);
 		dialog.show();
 	} 
 
 	@Override
 	protected void onProgressUpdate(String... values) {
 		super.onProgressUpdate(values);
-		dialog.setMessage(values[0]);
+		if(dialog != null && dialog.isShowing() && !isCancelled()){
+			dialog.setMessage(values[0]);
+		}
 	}
 
 	@Override
 	protected void onPostExecute(String result) {
 		super.onPostExecute(result);
-		if (dialog.isShowing()) {
+		if (dialog != null && dialog.isShowing()) {
 			dialog.dismiss();
 		}
 
@@ -204,5 +209,14 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 			return "";
 		}
 		return s;
+	}
+	
+	private void saveStatus(String statusMessage){
+		if(preferences == null){
+			return;
+		}
+		Editor editor = preferences.edit();
+		editor.putString("tappaStatusMessage", statusMessage);
+		editor.commit();
 	}
 }
