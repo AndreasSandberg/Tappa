@@ -42,8 +42,12 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 	@Override
 	protected void onCancelled() {
 		super.onCancelled();
-		if(dialog != null){
-			dialog.dismiss();
+		if(dialog != null && dialog.isShowing()){
+			try{
+				dialog.dismiss();				
+			}catch(IllegalArgumentException iae){
+				//Ignore this error...
+			}
 		}
 	}
 
@@ -210,7 +214,7 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 		}
 		return s;
 	}
-	
+
 	private void saveStatus(String statusMessage){
 		if(preferences == null){
 			return;
