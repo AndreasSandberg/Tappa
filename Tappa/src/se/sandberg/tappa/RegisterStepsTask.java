@@ -109,7 +109,7 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 
 		publishProgress("Skickar steg...");
 		//Register steps
-		Connection.Response register = Jsoup.connect("http://www.tappa.se/inside/steps/handlers/StepPost.ashx")
+		Connection.Response register = Jsoup.connect("http://www.tappa.se/inside/stepcompetition/steps/handlers/StepPost.ashx")
 				.data("AccountId", accountid, "SelectedDate", date, "Steps", nrOfSteps) 
 				.method(Method.POST)
 				.ignoreContentType(true)
