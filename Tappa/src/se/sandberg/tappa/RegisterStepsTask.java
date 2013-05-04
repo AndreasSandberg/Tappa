@@ -103,7 +103,12 @@ public class RegisterStepsTask extends AsyncTask<String, String, String> {
 			//No login...
 			return "Inloggning misslyckades, fel lösenord?";
 		}
-
+		
+		if(!html.contains("accountid=")){
+			//Inactive account
+			return "Kontot är inaktiverat, registreringsperioden slut?";
+		}
+		
 		String[] split = html.split("accountid=");
 		String accountid = split[1].substring(0, split[1].indexOf("&amp"));
 
